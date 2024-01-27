@@ -465,6 +465,26 @@ pub struct Infobox {
     pub engine: Engine,
 }
 
+fn penalize_bad_result(result: &EngineSearchResult) -> f64 {
+    let mut penalty: f64 = 0.0;
+    let slug: String = format!("{} {}", result.title, result.description);
+    if slug.contains("benefits of") {
+        penalty += 1.0;
+    }
+    if slug.contains("key benefits")
+    || slug.contains("key takeaways")
+    || slug.contains("top picks")
+    || slug.contains("our favorites")
+    || slug.contains("our picks") {
+        penalty += 0.5;
+    }
+    if slug.contains("in summary") {
+        penalty += 0.2;
+    }
+    penalty
+}
+
+
 fn merge_engine_responses(responses: HashMap<Engine, EngineResponse>) -> Response {
     let mut search_results: Vec<SearchResult> = Vec::new();
     let mut featured_snippet: Option<FeaturedSnippet> = None;
@@ -476,7 +496,7 @@ fn merge_engine_responses(responses: HashMap<Engine, EngineResponse>) -> Respons
             // position 1 has a score of 1, position 2 has a score of 0.5, position 3 has a
             // score of 0.33, etc.
             let base_result_score = 1. / (result_index + 1) as f64;
-            let result_score = base_result_score * engine.weight();
+            let result_score = (base_result_score - penalize_bad_result(&search_result)) * engine.weight();
 
             if let Some(existing_result) = search_results
                 .iter_mut()
