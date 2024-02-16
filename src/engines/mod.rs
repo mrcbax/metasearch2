@@ -405,7 +405,7 @@ pub static CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
         .local_address(IpAddr::from_str("0.0.0.0").unwrap())
         // we pretend to be a normal browser so websites don't block us
         // (since we're not entirely a bot, we're acting on behalf of the user)
-        .user_agent("Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0")
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; rv:123.0) Gecko/20100101 Firefox/123.0")
         .default_headers({
             let mut headers = HeaderMap::new();
             headers.insert("Accept-Language", "en-US,en;q=0.5".parse().unwrap());
@@ -473,6 +473,7 @@ fn merge_engine_responses(responses: HashMap<Engine, EngineResponse>) -> Respons
 
     for (engine, response) in responses {
         for (result_index, search_result) in response.search_results.into_iter().enumerate() {
+
             // position 1 has a score of 1, position 2 has a score of 0.5, position 3 has a
             // score of 0.33, etc.
             let base_result_score = 1. / (result_index + 1) as f64;
@@ -499,13 +500,15 @@ fn merge_engine_responses(responses: HashMap<Engine, EngineResponse>) -> Respons
                 existing_result.engines.insert(engine);
                 existing_result.score += result_score;
             } else {
-                search_results.push(SearchResult {
-                    url: search_result.url,
-                    title: search_result.title,
-                    description: search_result.description,
-                    engines: [engine].iter().cloned().collect(),
-                    score: result_score,
-                });
+                if !filter_spam(&search_result.url) {
+                    search_results.push(SearchResult {
+                        url: search_result.url,
+                        title: search_result.title,
+                        description: search_result.description,
+                        engines: [engine].iter().cloned().collect(),
+                        score: result_score,
+                    });
+                }
             }
         }
 
@@ -561,6 +564,21 @@ fn merge_engine_responses(responses: HashMap<Engine, EngineResponse>) -> Respons
 pub struct AutocompleteResult {
     pub query: String,
     pub score: f64,
+}
+
+fn filter_spam(url: &str) -> bool {
+    let spam_list = vec![
+        "forgeeks", "quora", "yahoo", "tecmint",
+        "alternativeto", "hackerearth", "linuxgenie",
+        "codeofcode", "tecadmin", "dev.to",
+        "linuxconfig.org", "linuxtechi", "nixcraft",
+        "learnitguide", "howtogeek", "techrepublic",
+        "codeopolis", "technoyard", "techreviews",
+        "simplilearn", "linuxize", "cyberciti",
+        "savvyit", "sitepoint", "phoenixnap",
+        "devconnected", "wpdiaries"
+    ];
+    spam_list.iter().any(|e| url.contains(e))
 }
 
 fn merge_autocomplete_responses(responses: HashMap<Engine, Vec<String>>) -> Vec<String> {
