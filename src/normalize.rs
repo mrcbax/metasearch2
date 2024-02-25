@@ -53,6 +53,11 @@ pub fn normalize_url(url: &str) -> eyre::Result<String> {
         }
     }
 
+    //convert reddit.com to old.reddit.com to bypass VPN and bot blocking
+    if url.host_str() == Some("reddit.com") {
+        url.set_host(Some("old.reddit.com")).unwrap();
+    }
+
     // url decode and encode path
     let path = url.path().to_string();
     let path = urlencoding::decode(&path)?;
