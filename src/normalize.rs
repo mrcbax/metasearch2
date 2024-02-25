@@ -46,8 +46,7 @@ pub fn normalize_url(url: &str) -> eyre::Result<String> {
 
     //convert undesireable URLs to more desireable ones.
     match url.host_str() {
-        Some("www.reddit.com") => url.set_host(Some("old.reddit.com")).unwrap(),
-        Some("reddit.com") => url.set_host(Some("old.reddit.com")).unwrap(),
+        Some("reddit.com" | "www.reddit.com") => url.set_host(Some("old.reddit.com")).unwrap(),
         Some("minecraft.fandom.com") => {
             let path = url.path().to_string();
             if let Some(path) = path.strip_prefix("/wiki/") {
