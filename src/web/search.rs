@@ -41,7 +41,7 @@ fn render_beginning_of_html(query: &str) -> String {
 }
 
 fn render_end_of_html() -> String {
-    r#"</main></div></body></html>"#.to_string()
+    r"</main></div></body></html>".to_string()
 }
 
 fn render_engine_list(engines: &[engines::Engine]) -> String {
@@ -95,27 +95,35 @@ fn render_featured_snippet(featured_snippet: &engines::FeaturedSnippet) -> Strin
 
 fn render_results(response: Response) -> String {
     let mut html = String::new();
-    if let Some(infobox) = response.infobox {
+    if let Some(infobox) = &response.infobox {
         html.push_str(&format!(
             r#"<div class="infobox">{infobox_html}{engines_html}</div>"#,
             infobox_html = &infobox.html,
             engines_html = render_engine_list(&[infobox.engine])
         ));
     }
-
-    if let Some(answer) = response.answer {
+    if let Some(answer) = &response.answer {
         html.push_str(&format!(
             r#"<div class="answer">{answer_html}{engines_html}</div>"#,
             answer_html = &answer.html,
             engines_html = render_engine_list(&[answer.engine])
         ));
     }
-    if let Some(featured_snippet) = response.featured_snippet {
-        html.push_str(&render_featured_snippet(&featured_snippet));
+    if let Some(featured_snippet) = &response.featured_snippet {
+        html.push_str(&render_featured_snippet(featured_snippet));
     }
     for result in &response.search_results {
         html.push_str(&render_search_result(result));
     }
+
+    if response.infobox.is_none()
+        && response.answer.is_none()
+        && response.featured_snippet.is_none()
+        && response.search_results.is_empty()
+    {
+        html.push_str(r#"<p>No results.</p>"#);
+    }
+
     html
 }
 
@@ -173,8 +181,10 @@ pub async fn route(
             // this could be exploited under some setups, but the ip is only used for the
             // "what is my ip" answer so it doesn't really matter
             .get("x-forwarded-for")
-            .map(|ip| ip.to_str().unwrap_or_default().to_string())
-            .unwrap_or_else(|| addr.ip().to_string()),
+            .map_or_else(
+                || addr.ip().to_string(),
+                |ip| ip.to_str().unwrap_or_default().to_string(),
+            ),
     };
 
     let s = stream! {

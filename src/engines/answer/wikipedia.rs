@@ -74,14 +74,15 @@ pub fn parse_response(body: &str) -> eyre::Result<EngineResponse> {
         return Ok(EngineResponse::new());
     }
 
-    let mut previous_extract = "".to_string();
+    let mut previous_extract = String::new();
     let mut extract = extract.clone();
     while previous_extract != extract {
-        previous_extract = extract.clone();
+        previous_extract.clone_from(&extract);
         extract = extract
             .replace("( ", "(")
             .replace("(, ", "(")
             .replace("(; ", "(")
+            .replace(" ()", "")
             .replace("()", "");
     }
 
@@ -91,7 +92,7 @@ pub fn parse_response(body: &str) -> eyre::Result<EngineResponse> {
     Ok(EngineResponse::infobox_html(format!(
         r#"<a href="{page_url}"><h2>{title}</h2></a><p>{extract}</p>"#,
         page_url = html_escape::encode_quoted_attribute(&page_url),
-        title = html_escape::encode_text(title),
-        extract = html_escape::encode_text(&extract),
+        title = html_escape::encode_safe(title),
+        extract = html_escape::encode_safe(&extract),
     )))
 }
