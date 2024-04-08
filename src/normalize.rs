@@ -44,13 +44,19 @@ pub fn normalize_url(url: &str) -> eyre::Result<String> {
         ));
     }
 
-    // convert minecraft.fandom.com/wiki/ to minecraft.wiki/w/
-    if url.host_str() == Some("minecraft.fandom.com") {
-        let path = url.path().to_string();
-        if let Some(path) = path.strip_prefix("/wiki/") {
-            url.set_host(Some("minecraft.wiki")).unwrap();
-            url.set_path(&format!("/w/{path}"));
-        }
+    //convert undesireable URLs to more desireable ones.
+    match url.host_str() {
+        Some("reddit.com" | "www.reddit.com") => url.set_host(Some("old.reddit.com")).unwrap(),
+        Some("minecraft.fandom.com") => {
+            let path = url.path().to_string();
+            if let Some(path) = path.strip_prefix("/wiki/") {
+                url.set_host(Some("minecraft.wiki")).unwrap();
+                url.set_path(&format!("/w/{path}"));
+            }
+        },
+        Some(_) => (),
+        None => ()
+
     }
 
     // url decode and encode path
