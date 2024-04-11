@@ -580,7 +580,11 @@ fn filter_spam(url: &str) -> bool {
         "codeopolis", "technoyard", "techreviews",
         "simplilearn", "linuxize", "cyberciti",
         "savvyit", "sitepoint", "phoenixnap",
-        "devconnected", "wpdiaries"
+        "devconnected", "wpdiaries", "educba",
+        "javatpoint", "educative", "tutorialspoint",
+        "cosmiclearn", "rookienerd", "nakivo",
+        "vinchin", "cloudthat", "virten",
+        "geek-university", "spiceworks"
     ];
     spam_list.iter().any(|e| url.contains(e))
 }
