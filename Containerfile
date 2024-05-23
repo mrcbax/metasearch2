@@ -16,5 +16,6 @@ RUN mv ./target/release/metasearch2 ./app
 FROM scratch AS runtime
 WORKDIR /app
 COPY --from=builder /app/app /usr/local/bin/
+COPY ./config.toml /usr/local/bin/
 EXPOSE 28019
 ENTRYPOINT ["/usr/local/bin/app"]
