@@ -1,24 +1,21 @@
 pub mod autocomplete;
+mod image_proxy;
+pub mod index;
 pub mod opensearch;
 pub mod search;
 
-use std::net::SocketAddr;
+use std::{net::SocketAddr, sync::Arc};
 
 use axum::{http::header, routing::get, Router};
+use tracing::info;
 
-pub const BIND_ADDRESS: &str = "0.0.0.0:28019";
+use crate::config::Config;
 
-pub async fn run() {
+pub async fn run(config: Config) {
+    let bind_addr = config.bind;
+
     let app = Router::new()
-        .route(
-            "/",
-            get(|| async {
-                (
-                    [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
-                    include_str!("assets/index.html"),
-                )
-            }),
-        )
+        .route("/", get(index::index))
         .route(
             "/style.css",
             get(|| async {
@@ -48,11 +45,13 @@ pub async fn run() {
         )
         .route("/opensearch.xml", get(opensearch::route))
         .route("/search", get(search::route))
-        .route("/autocomplete", get(autocomplete::route));
+        .route("/autocomplete", get(autocomplete::route))
+        .route("/image-proxy", get(image_proxy::route))
+        .with_state(Arc::new(config));
 
-    println!("Listening on {BIND_ADDRESS}");
+    info!("Listening on http://{bind_addr}");
 
-    let listener = tokio::net::TcpListener::bind(BIND_ADDRESS).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(bind_addr).await.unwrap();
     axum::serve(
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),

@@ -1,3 +1,4 @@
+use maud::{html, PreEscaped};
 use scraper::{Html, Selector};
 use url::Url;
 
@@ -5,15 +6,15 @@ use crate::engines::{answer::regex, Response, CLIENT};
 
 pub fn request(response: &Response) -> Option<reqwest::RequestBuilder> {
     for search_result in response.search_results.iter().take(8) {
-        if regex!(r"^https:\/\/github\.com\/[\w-]+\/[\w.-]+$").is_match(&search_result.url) {
-            return Some(CLIENT.get(search_result.url.as_str()));
+        if regex!(r"^https:\/\/github\.com\/[\w-]+\/[\w.-]+$").is_match(&search_result.result.url) {
+            return Some(CLIENT.get(search_result.result.url.as_str()));
         }
     }
 
     None
 }
 
-pub fn parse_response(body: &str) -> Option<String> {
+pub fn parse_response(body: &str) -> Option<PreEscaped<String>> {
     let dom = Html::parse_document(body);
 
     let url_relative = dom
@@ -68,10 +69,12 @@ pub fn parse_response(body: &str) -> Option<String> {
         .collect::<String>()
     };
 
-    Some(format!(
-        r#"<a href="{url}"><h1>{title}</h1></a>
-<div class="infobox-github-readme">{readme_html}</div>"#,
-        url = html_escape::encode_quoted_attribute(&url),
-        title = html_escape::encode_safe(&title),
-    ))
+    Some(html! {
+        a href=(url) {
+            h1 { (title) }
+        }
+        div."infobox-github-readme" {
+            (PreEscaped(readme_html))
+        }
+    })
 }

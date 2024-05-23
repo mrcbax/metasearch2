@@ -26,6 +26,7 @@
   --syntax-special: #e6b673;
   --syntax-constant: #d2a6ff;
   --syntax-comment: #acb6bf8c;
+  --syntax-func: #ffb454;
 }
 
 html {
@@ -39,6 +40,11 @@ body {
   line-height: 1.2;
   height: 100%;
 }
+.version-info {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+}
 .results-container {
   /* enough space for the infobox */
   max-width: 73.5rem;
@@ -51,6 +57,13 @@ main {
   padding: 1rem 0.5rem;
   background-color: var(--bg-2);
   min-height: 100%;
+}
+.search-images > main {
+  /* image search uses 100% width */
+  max-width: 100%;
+}
+.results-container.search-images {
+  max-width: none;
 }
 @media screen and (max-width: 74rem) {
   /* small screens */
@@ -137,6 +150,21 @@ h1 {
 .search-input-suggestion.focused,
 .search-input-suggestion:hover {
   background: var(--bg-4);
+}
+
+/* search tabs (like images, if enabled) */
+.search-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  margin-top: -0.5rem;
+}
+.search-tab {
+  border: 1px solid var(--bg-4);
+  padding: 0.25rem;
+}
+a.search-tab {
+  color: var(--link);
 }
 
 /* search result */
@@ -237,6 +265,9 @@ h1 {
 .answer-calc-special {
   color: var(--syntax-special);
 }
+.answer-calc-func {
+  color: var(--syntax-func);
+}
 
 .answer-dictionary-word,
 .answer-thesaurus-word {
@@ -287,6 +318,18 @@ h3.answer-thesaurus-category-title {
 }
 .answer-thesaurus-list a {
   text-decoration: underline;
+}
+.answer-notepad {
+  width: calc(100% - 4px);
+  height: fit-content;
+  overflow-y: show;
+  background-color: transparent;
+  color: white;
+  border: none;
+  outline: none;
+  min-height: 4em;
+  font-size: 12px;
+  resize: none;
 }
 
 /* infobox */
@@ -348,4 +391,60 @@ h3.answer-thesaurus-category-title {
 }
 .postsearch-infobox p {
   margin-bottom: 1em;
+}
+.infobox-minecraft_wiki-article > .notaninfobox {
+  display: none !important;
+}
+.noexcerpt,
+.navigation-not-searchable {
+  display: none !important;
+}
+.mcw-mainpage-icon {
+  display: inline-block;
+}
+
+/* image results */
+.image-results {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.image-result {
+  min-width: 12rem;
+  position: relative;
+}
+.image-result-img-container {
+  margin: 0 auto;
+  width: fit-content;
+}
+.image-result img {
+  height: 10.3rem;
+  width: auto;
+}
+.image-result-page-anchor {
+  display: block;
+  height: 2em;
+}
+.image-result-page-url {
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  font-size: 0.8rem;
+
+  white-space: nowrap;
+  width: 100%;
+  position: absolute;
+  display: block;
+}
+.image-result-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  font-size: 0.85rem;
+
+  white-space: nowrap;
+  width: 100%;
+  position: absolute;
+  display: block;
+  margin-top: 1em;
 }

@@ -19,18 +19,14 @@ macro_rules! engines {
                 }
             }
         }
-    };
-}
 
-#[macro_export]
-macro_rules! engine_weights {
-    ($($engine:ident = $weight:expr),* $(,)?) => {
-        impl Engine {
-            #[must_use]
-            pub fn weight(&self) -> f64 {
-                match self {
-                    $(Engine::$engine => $weight,)*
-                    _ => 1.,
+        impl FromStr for Engine {
+            type Err = ();
+
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                match s {
+                    $($id => Ok(Engine::$engine),)*
+                    _ => Err(()),
                 }
             }
         }
@@ -62,6 +58,7 @@ macro_rules! engine_requests {
                 }
             }
 
+            #[tracing::instrument(skip(self, res), fields(engine = %self))]
             pub fn parse_response(&self, res: &HttpResponse) -> eyre::Result<EngineResponse> {
                 #[allow(clippy::useless_conversion)]
                 match self {
@@ -118,12 +115,40 @@ macro_rules! engine_postsearch_requests {
             }
 
             #[must_use]
-            pub fn postsearch_parse_response(&self, res: &HttpResponse) -> Option<String> {
+            pub fn postsearch_parse_response(&self, res: &HttpResponse) -> Option<maud::PreEscaped<String>> {
                 match self {
                     $(
                         Engine::$engine => $crate::engine_parse_response! { res, $module::$engine_id::$parse_response }?,
                     )*
                     _ => None,
+                }
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! engine_image_requests {
+    ($($engine:ident => $module:ident::$engine_id:ident::$request:ident, $parse_response:ident),* $(,)?) => {
+        impl Engine {
+            #[must_use]
+            pub fn request_images(&self, query: &SearchQuery) -> RequestResponse {
+                match self {
+                    $(
+                        Engine::$engine => $module::$engine_id::$request(query).into(),
+                    )*
+                    _ => RequestResponse::None,
+                }
+            }
+
+            pub fn parse_images_response(&self, res: &HttpResponse) -> eyre::Result<EngineImagesResponse> {
+                #[allow(clippy::useless_conversion)]
+                match self {
+                    $(
+                        Engine::$engine => $crate::engine_parse_response! { res, $module::$engine_id::$parse_response }
+                            .ok_or_else(|| eyre::eyre!("engine {self:?} can't parse images response"))?,
+                    )*
+                    _ => eyre::bail!("engine {self:?} can't parse response"),
                 }
             }
         }

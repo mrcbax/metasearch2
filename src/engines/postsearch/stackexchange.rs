@@ -1,3 +1,4 @@
+use maud::{html, PreEscaped};
 use scraper::{Html, Selector};
 use url::Url;
 
@@ -6,16 +7,16 @@ use crate::engines::{answer::regex, Response, CLIENT};
 pub fn request(response: &Response) -> Option<reqwest::RequestBuilder> {
     for search_result in response.search_results.iter().take(8) {
         if regex!(r"^https:\/\/(stackoverflow\.com|serverfault\.com|superuser\.com|\w{1,}\.stackexchange\.com)\/questions\/\d+")
-            .is_match(&search_result.url)
+            .is_match(&search_result.result.url)
         {
-            return Some(CLIENT.get(search_result.url.as_str()));
+            return Some(CLIENT.get(search_result.result.url.as_str()));
         }
     }
 
     None
 }
 
-pub fn parse_response(body: &str) -> Option<String> {
+pub fn parse_response(body: &str) -> Option<PreEscaped<String>> {
     let dom = Html::parse_document(body);
 
     let title = dom
@@ -55,10 +56,12 @@ pub fn parse_response(body: &str) -> Option<String> {
 
     let url = format!("{url}#{answer_id}");
 
-    Some(format!(
-        r#"<a href="{url}"><h2>{title}</h2></a>
-<div class="infobox-stackexchange-answer">{answer_html}</div>"#,
-        url = html_escape::encode_quoted_attribute(&url.to_string()),
-        title = html_escape::encode_safe(&title),
-    ))
+    Some(html! {
+        a href=(url) {
+            h2 { (title) }
+        }
+        div."infobox-stackexchange-answer" {
+            (PreEscaped(answer_html))
+        }
+    })
 }

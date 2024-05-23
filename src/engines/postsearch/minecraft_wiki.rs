@@ -5,7 +5,11 @@ use crate::engines::{HttpResponse, Response, CLIENT};
 
 pub fn request(response: &Response) -> Option<reqwest::RequestBuilder> {
     for search_result in response.search_results.iter().take(8) {
-        if search_result.result.url.starts_with("https://docs.rs/") {
+        if search_result
+            .result
+            .url
+            .starts_with("https://minecraft.wiki/w/")
+        {
             return Some(CLIENT.get(search_result.result.url.as_str()));
         }
     }
@@ -18,56 +22,39 @@ pub fn parse_response(HttpResponse { res, body, .. }: &HttpResponse) -> Option<P
 
     let dom = Html::parse_document(body);
 
-    let version = dom
-        .select(&Selector::parse("h2 .version").unwrap())
-        .next()?
-        .text()
-        .collect::<String>();
-
     let page_title = dom
-        .select(&Selector::parse("h1").unwrap())
+        .select(&Selector::parse("#firstHeading").unwrap())
         .next()?
         .text()
         .collect::<String>()
         .trim()
         .to_string();
 
-    let doc_query = Selector::parse(".docblock").unwrap();
+    let doc_query = Selector::parse(".mw-parser-output > p").unwrap();
 
     let doc_html = dom
         .select(&doc_query)
         .next()
-        .map(|doc| doc.inner_html())
-        .unwrap_or_default();
-
-    let item_decl = dom
-        .select(&Selector::parse(".item-decl").unwrap())
-        .next()
-        .map(|el| el.html())
+        .map(|doc| doc.html())
         .unwrap_or_default();
 
     let doc_html = ammonia::Builder::default()
         .link_rel(None)
+        .add_allowed_classes("div", ["notaninfobox", "mcw-mainpage-icon"])
+        .add_allowed_classes("pre", ["noexcerpt", "navigation-not-searchable"])
         .url_relative(ammonia::UrlRelative::RewriteWithBase(url.clone()))
-        .clean(&format!("{item_decl}{doc_html}"))
+        .clean(&doc_html)
         .to_string();
-
-    let (category, title) = page_title.split_once(' ').unwrap_or(("", &page_title));
 
     let title_html = html! {
         h2 {
-            (category)
-            " "
-            a href=(url) { (title) }
-            @if category == "Crate" {
-                span."infobox-docs_rs-version" { (version) }
-            }
+            a href=(url) { (page_title) }
         }
     };
 
     Some(html! {
         (title_html)
-        div."infobox-docs_rs-doc" {
+        div."infobox-minecraft_wiki-article" {
             (PreEscaped(doc_html))
         }
     })
