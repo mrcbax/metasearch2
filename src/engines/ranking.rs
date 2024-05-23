@@ -65,7 +65,7 @@ pub fn merge_engine_responses(
                 let other_engine_config = config.engines.get(s.engine);
                 other_engine_config.weight
             });
-            if engine_config.weight > featured_snippet_weight & !filter_spam(engine_featured_snippet.url.as_str()) {
+            if engine_config.weight > featured_snippet_weight && !filter_spam(engine_featured_snippet.url.as_str()) {
                 featured_snippet = Some(FeaturedSnippet {
                     url: engine_featured_snippet.url,
                     title: engine_featured_snippet.title,
