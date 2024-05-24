@@ -16,4 +16,4 @@ WORKDIR /app
 COPY --from=builder /app/config.toml /usr/local/bin/config.toml
 COPY --from=builder /app/app /usr/local/bin/app
 EXPOSE 28019
-ENTRYPOINT ["/bin/app"]
+ENTRYPOINT ["/usr/local/bin/app"]
