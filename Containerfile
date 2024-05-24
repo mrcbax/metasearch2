@@ -9,11 +9,11 @@ FROM chef AS builder
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
-RUN cargo build --release --bin app
+RUN cargo build --release
 
 FROM scratch AS runtime
 WORKDIR /app
 COPY --from=builder /app/config.toml /usr/local/bin/config.toml
-COPY --from=builder /app/app /usr/local/bin/app
+COPY --from=builder /app/target/release/metasearch2 /usr/local/bin/metasearch2
 EXPOSE 28019
-ENTRYPOINT ["/usr/local/bin/app"]
+ENTRYPOINT ["/usr/local/bin/metasearch2"]
