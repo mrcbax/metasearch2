@@ -11,7 +11,7 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
 RUN cargo build --release
 
-FROM scratch AS runtime
+FROM debian:slim AS runtime
 WORKDIR /app
 COPY --from=builder /app/config.toml /usr/local/bin/config.toml
 COPY --from=builder /app/target/release/metasearch2 /usr/local/bin/metasearch2
